@@ -40,7 +40,7 @@ namespace ProductsAPI.Migrations
 
                     b.HasKey("ProductId");
 
-                    b.ToTable("Product");
+                    b.ToTable("Product", (string)null);
                 });
 #pragma warning restore 612, 618
         }

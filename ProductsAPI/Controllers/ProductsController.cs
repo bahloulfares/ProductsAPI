@@ -1,15 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductsAPI;
+using MassTransit;
+using Shared.Models;
 
 [Route("api/[controller]")]
 [ApiController]
 public class ProductsController : ControllerBase
 {
     private readonly ProductsAPIContext _context;
-    public ProductsController(ProductsAPIContext context)
+    private readonly IPublishEndpoint _publishEndpoint;
+    public ProductsController(ProductsAPIContext context, IPublishEndpoint publishEndpoint)
     {
         _context = context;
+        _publishEndpoint = publishEndpoint;
     }
 
     // GET: api/Product
@@ -71,6 +75,12 @@ public class ProductsController : ControllerBase
     {
         _context.Product.Add(product);
         await _context.SaveChangesAsync();
+        // Publier vers RabbitMQ
+        await _publishEndpoint.Publish<ProductCreated>(new ProductCreated
+        {
+            Id = product.ProductId,
+            Name = product.Name
+        });
 
         return CreatedAtAction("GetProduct", new { productid = product.ProductId }, product);
     }
